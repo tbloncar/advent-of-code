@@ -13,19 +13,11 @@ func findOverlap(claims []string) int {
 	fabric := map[string]bool{}
 
 	for _, claim := range claims {
-		coords, dims := extractCoordinatesAndDimensions(claim)
-
-		x, _ := strconv.Atoi(coords[0])
-		y, _ := strconv.Atoi(coords[1])
-		w, _ := strconv.Atoi(dims[0])
-		h, _ := strconv.Atoi(dims[1])
+		x, y, w, h := extractCoordinatesAndDimensions(claim)
 
 		for i := 0; i < w; i++ {
 			for j := 0; j < h; j++ {
-				xc := x + i
-				yc := y + j
-
-				key := fmt.Sprintf("%dx%d", xc, yc)
+				key := keyForCoordinate(x+i, y+j)
 
 				if _, ok := fabric[key]; ok {
 					overlapping[key] = true
@@ -39,11 +31,18 @@ func findOverlap(claims []string) int {
 	return len(overlapping)
 }
 
-func extractCoordinatesAndDimensions(claim string) ([]string, []string) {
+func extractCoordinatesAndDimensions(claim string) (x, y, w, h int) {
 	a := strings.Split(claim, "@ ")[1]
 	b := strings.Split(a, ": ")
 
-	return strings.Split(b[0], ","), strings.Split(b[1], "x")
+	coords, dims := strings.Split(b[0], ","), strings.Split(b[1], "x")
+
+	x, _ = strconv.Atoi(coords[0])
+	y, _ = strconv.Atoi(coords[1])
+	w, _ = strconv.Atoi(dims[0])
+	h, _ = strconv.Atoi(dims[1])
+
+	return
 }
 
 // Part 2
@@ -51,19 +50,11 @@ func findNonOverlappingClaim(claims []string) string {
 	fabric := map[string][]string{}
 
 	for _, claim := range claims {
-		coords, dims := extractCoordinatesAndDimensions(claim)
-
-		x, _ := strconv.Atoi(coords[0])
-		y, _ := strconv.Atoi(coords[1])
-		w, _ := strconv.Atoi(dims[0])
-		h, _ := strconv.Atoi(dims[1])
+		x, y, w, h := extractCoordinatesAndDimensions(claim)
 
 		for i := 0; i < w; i++ {
 			for j := 0; j < h; j++ {
-				xc := x + i
-				yc := y + j
-
-				key := fmt.Sprintf("%dx%d", xc, yc)
+				key := keyForCoordinate(x+i, y+j)
 
 				if _, ok := fabric[key]; ok {
 					fabric[key] = append(fabric[key], claim)
@@ -76,30 +67,25 @@ func findNonOverlappingClaim(claims []string) string {
 
 OverlapCheck:
 	for _, claim := range claims {
-		coords, dims := extractCoordinatesAndDimensions(claim)
-
-		x, _ := strconv.Atoi(coords[0])
-		y, _ := strconv.Atoi(coords[1])
-		w, _ := strconv.Atoi(dims[0])
-		h, _ := strconv.Atoi(dims[1])
+		x, y, w, h := extractCoordinatesAndDimensions(claim)
 
 		for i := 0; i < w; i++ {
 			for j := 0; j < h; j++ {
-				xc := x + i
-				yc := y + j
-
-				key := fmt.Sprintf("%dx%d", xc, yc)
-
+				key := keyForCoordinate(x+i, y+j)
 				if len(fabric[key]) > 1 {
 					continue OverlapCheck
 				}
 			}
 		}
 
-		return strings.Split(claim, " ")[0]
+		return claim
 	}
 
-	return ""
+	return "No claim found"
+}
+
+func keyForCoordinate(x, y int) string {
+	return fmt.Sprintf("%dx%d", x, y)
 }
 
 func main() {
@@ -115,6 +101,7 @@ func main() {
 
 	a1 := findOverlap(claims)
 	a2 := findNonOverlappingClaim(claims)
+
 	fmt.Println("P1:", a1)
 	fmt.Println("P2:", a2)
 }
