@@ -17,62 +17,25 @@ const (
 
 // Part 1
 func checksum(entries []string) int {
-	sort.Strings(entries)
+	guard, maxSleep, maxMinute := "", 0, 0
 
-	asleep := map[string]map[int]int{}
-
-	var currentGuard string
-	var minSleep int
-	var minWakes int
-
-	for _, entry := range entries {
-		time, action, guard := getTimeActionGuard(entry)
-
-		if action == actionBegins {
-			currentGuard = guard
-		} else if action == actionSleeps {
-			if _, ok := asleep[currentGuard]; !ok {
-				asleep[currentGuard] = map[int]int{}
-			}
-
-			minSleep, _ = strconv.Atoi(time)
-		} else if action == actionAwakes {
-			minWakes, _ = strconv.Atoi(time)
-
-			for minSleep < minWakes {
-				asleep[currentGuard][minSleep] += 1
-				minSleep += 1
-			}
-		}
-	}
-
-	badGuard := ""
-	maxSleep := 0
-	maxMinute := 0
-
-	for g, schedule := range asleep {
-		totalSleep := 0
-		targetMinuteCount := 0
-		targetMinute := 0
+	for g, schedule := range buildGuardSleepSchedule(entries) {
+		totalSleep, targetMinuteCount, targetMinute := 0, 0, 0
 
 		for min, count := range schedule {
 			totalSleep += count
 
 			if count > targetMinuteCount {
-				targetMinute = min
-				targetMinuteCount = count
+				targetMinute, targetMinuteCount = min, count
 			}
 		}
 
 		if totalSleep > maxSleep {
-			badGuard = g
-			maxSleep = totalSleep
-			maxMinute = targetMinute
+			guard, maxSleep, maxMinute = g, totalSleep, targetMinute
 		}
 	}
 
-	guardNumber, _ := strconv.Atoi(strings.Split(badGuard, "#")[1])
-	return guardNumber * maxMinute
+	return guardNumber(guard) * maxMinute
 }
 
 func getTimeActionGuard(entry string) (time, action, guard string) {
@@ -93,8 +56,7 @@ func getTimeActionGuard(entry string) (time, action, guard string) {
 	return time, action, guard
 }
 
-// Part 2
-func checksum2(entries []string) int {
+func buildGuardSleepSchedule(entries []string) map[string]map[int]int {
 	sort.Strings(entries)
 
 	asleep := map[string]map[int]int{}
@@ -124,22 +86,27 @@ func checksum2(entries []string) int {
 		}
 	}
 
-	badGuard := ""
-	maxCount := 0
-	maxMinute := 0
+	return asleep
+}
 
-	for g, schedule := range asleep {
+func guardNumber(guard string) (n int) {
+	n, _ = strconv.Atoi(strings.Split(guard, "#")[1])
+	return
+}
+
+// Part 2
+func checksum2(entries []string) int {
+	guard, maxCount, maxMinute := "", 0, 0
+
+	for g, schedule := range buildGuardSleepSchedule(entries) {
 		for min, count := range schedule {
 			if count > maxCount {
-				maxMinute = min
-				maxCount = count
-				badGuard = g
+				maxMinute, maxCount, guard = min, count, g
 			}
 		}
 	}
 
-	guardNumber, _ := strconv.Atoi(strings.Split(badGuard, "#")[1])
-	return guardNumber * maxMinute
+	return guardNumber(guard) * maxMinute
 }
 
 func main() {
