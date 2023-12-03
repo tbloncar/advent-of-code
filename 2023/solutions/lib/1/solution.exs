@@ -1,4 +1,4 @@
-input = File.read!("input.txt")
+input = Helpers.read_input("1")
 
 integer_map = %{
   "one" => "1",
