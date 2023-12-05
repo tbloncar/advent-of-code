@@ -26,19 +26,6 @@ defmodule Solution4 do
       |> String.split("\n")
       |> Enum.reject(&(&1 == ""))
 
-    card_index =
-      cards
-      |> Enum.reduce(%{}, fn card, m ->
-        card_number = Regex.run(~r/(\d+):/, card) |> Enum.at(1) |> String.to_integer()
-        Map.put(m, card_number, card)
-      end)
-
-    queue =
-      cards
-      |> Enum.reduce(:queue.new(), fn line, q ->
-        :queue.in(line, q)
-      end)
-
     # 1 -> []
     # 2 -> [1]
     # 3 -> [1, 2]
@@ -53,12 +40,10 @@ defmodule Solution4 do
     # 5 -> = 1 + 1 + 4 + 8 = 14
     # 6 -> 1
 
-    {card_count, _} =
-      Enum.reduce_while(Stream.iterate(1, &(&1 + 1)), {length(cards), queue}, fn _n,
-                                                                                 {total_cards, q} ->
-        {{_, card}, q} = :queue.out(q)
-        IO.puts("Processing card: #{card}")
-
+    {card_count, _, _} =
+      Enum.reduce(cards, {0, %{1 => []}, %{1 => 1}}, fn card,
+                                                        {total_cards, copied_by_card,
+                                                         count_by_card} ->
         [card_with_number, numbers] = String.split(card, ~r/Card\s+\d+:\s+/)
         card_number = Regex.run(~r/(\d+):/, card) |> Enum.at(1) |> String.to_integer()
         [winning_numbers, my_numbers] = String.split(numbers, ~r/\s+\|\s+/)
@@ -67,25 +52,37 @@ defmodule Solution4 do
           MapSet.new(String.split(winning_numbers, ~r/\s+/) |> Enum.map(&String.to_integer(&1)))
 
         my_set = MapSet.new(String.split(my_numbers, ~r/\s+/) |> Enum.map(&String.to_integer(&1)))
-        card_count = MapSet.intersection(winning_set, my_set) |> MapSet.size()
+        copy_card_count = MapSet.intersection(winning_set, my_set) |> MapSet.size()
 
-        # Add card copies to queue
-        q =
-          if card_count > 0 do
-            Enum.reduce((card_number + 1)..(card_number + card_count), q, fn copy_card_number,
-                                                                             q2 ->
-              card_copy = Map.get(card_index, copy_card_number)
-              :queue.in(card_copy, q2)
-            end)
+        # Record cards as having been copied by current card
+        copied_by_card =
+          if copy_card_count > 0 do
+            Enum.reduce(
+              (card_number + 1)..(card_number + copy_card_count),
+              copied_by_card,
+              fn copy_card_number, cbc ->
+                copied_by = Map.get(cbc, copy_card_number, [])
+                Map.put(cbc, copy_card_number, Enum.concat(copied_by, [card_number]))
+              end
+            )
           else
-            q
+            copied_by_card
           end
 
-        if :queue.len(q) > 0 do
-          {:cont, {total_cards + card_count, q}}
-        else
-          {:halt, {total_cards + card_count, q}}
-        end
+        copied_by = Map.get(copied_by_card, card_number, [])
+
+        card_count =
+          if Enum.any?(copied_by) do
+            Enum.reduce(copied_by, 1, fn cn, count ->
+              count + Map.get(count_by_card, cn)
+            end)
+          else
+            1
+          end
+
+        count_by_card = Map.put(count_by_card, card_number, card_count)
+
+        {total_cards + card_count, copied_by_card, count_by_card}
       end)
 
     card_count
