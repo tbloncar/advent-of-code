@@ -1,6 +1,7 @@
 defmodule Solution5 do
   def part1 do
-    {seeds, sts, stf, ftw, wtl, ltt, tth, htl} = extract_data()
+    %{seeds: seeds, sts: sts, stf: stf, ftw: ftw, wtl: wtl, ltt: ltt, tth: tth, htl: htl} =
+      extract_data()
 
     locations =
       seeds
@@ -14,7 +15,8 @@ defmodule Solution5 do
   end
 
   def part2 do
-    {seeds, sts, stf, ftw, wtl, ltt, tth, htl} = extract_data(true)
+    %{seeds: seeds, sts: sts, stf: stf, ftw: ftw, wtl: wtl, ltt: ltt, tth: tth, htl: htl} =
+      extract_data(true)
 
     seed_ranges =
       Enum.chunk_every(seeds, 2)
@@ -68,62 +70,51 @@ defmodule Solution5 do
   end
 
   defp extract_data(reverse_maps \\ false) do
-    Helpers.read_input("5")
+    Helpers.read_test_input("5")
     |> String.split("\n\n")
-    |> Enum.reduce({[], [], [], [], [], [], [], []}, fn section,
-                                                        {
-                                                          i_seeds,
-                                                          i_sts,
-                                                          i_stf,
-                                                          i_ftw,
-                                                          i_wtl,
-                                                          i_ltt,
-                                                          i_tth,
-                                                          i_htl
-                                                        } ->
-      lines = String.split(section, "\n")
+    |> Enum.reduce(
+      %{
+        seeds: [],
+        sts: [],
+        stf: [],
+        ftw: [],
+        wtl: [],
+        ltt: [],
+        tth: [],
+        htl: []
+      },
+      fn section, acc ->
+        lines = String.split(section, "\n")
+        label = Enum.at(lines, 0)
 
-      section_label = Enum.at(lines, 0)
+        section_key =
+          cond do
+            Regex.match?(~r/seeds:/, label) -> :seeds
+            Regex.match?(~r/seed-to-soil map:/, label) -> :sts
+            Regex.match?(~r/soil-to-fertilizer map:/, label) -> :stf
+            Regex.match?(~r/fertilizer-to-water map:/, label) -> :ftw
+            Regex.match?(~r/water-to-light map:/, label) -> :wtl
+            Regex.match?(~r/light-to-temperature map:/, label) -> :ltt
+            Regex.match?(~r/temperature-to-humidity map:/, label) -> :tth
+            Regex.match?(~r/humidity-to-location map:/, label) -> :htl
+            true -> nil
+          end
 
-      cond do
-        String.match?(section_label, ~r/seeds:/) ->
-          i_seeds =
-            String.split(section_label, ": ")
+        IO.puts("section key: #{section_key}")
+
+        if section_key == :seeds do
+          new_value =
+            String.split(label, ": ")
             |> Enum.at(1)
             |> String.split(" ")
             |> Enum.map(&String.to_integer(&1))
 
-          {i_seeds, i_sts, i_stf, i_ftw, i_wtl, i_ltt, i_tth, i_htl}
-
-        String.match?(section_label, ~r/seed-to-soil map:/) ->
-          {i_seeds, create_range_map(section, reverse_maps), i_stf, i_ftw, i_wtl, i_ltt, i_tth,
-           i_htl}
-
-        String.match?(section_label, ~r/soil-to-fertilizer map:/) ->
-          {i_seeds, i_sts, create_range_map(section, reverse_maps), i_ftw, i_wtl, i_ltt, i_tth,
-           i_htl}
-
-        String.match?(section_label, ~r/fertilizer-to-water map:/) ->
-          {i_seeds, i_sts, i_stf, create_range_map(section, reverse_maps), i_wtl, i_ltt, i_tth,
-           i_htl}
-
-        String.match?(section_label, ~r/water-to-light map:/) ->
-          {i_seeds, i_sts, i_stf, i_ftw, create_range_map(section, reverse_maps), i_ltt, i_tth,
-           i_htl}
-
-        String.match?(section_label, ~r/light-to-temperature map:/) ->
-          {i_seeds, i_sts, i_stf, i_ftw, i_wtl, create_range_map(section, reverse_maps), i_tth,
-           i_htl}
-
-        String.match?(section_label, ~r/temperature-to-humidity map:/) ->
-          {i_seeds, i_sts, i_stf, i_ftw, i_wtl, i_ltt, create_range_map(section, reverse_maps),
-           i_htl}
-
-        String.match?(section_label, ~r/humidity-to-location map:/) ->
-          {i_seeds, i_sts, i_stf, i_ftw, i_wtl, i_ltt, i_tth,
-           create_range_map(section, reverse_maps)}
+          Map.put(acc, section_key, new_value)
+        else
+          Map.put(acc, section_key, create_range_map(section, reverse_maps))
+        end
       end
-    end)
+    )
   end
 end
 
