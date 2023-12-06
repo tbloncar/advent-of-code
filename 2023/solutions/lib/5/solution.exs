@@ -100,8 +100,6 @@ defmodule Solution5 do
             true -> nil
           end
 
-        IO.puts("section key: #{section_key}")
-
         if section_key == :seeds do
           new_value =
             String.split(label, ": ")
