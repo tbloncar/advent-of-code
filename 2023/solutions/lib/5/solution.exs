@@ -70,7 +70,7 @@ defmodule Solution5 do
   end
 
   defp extract_data(reverse_maps \\ false) do
-    Helpers.read_test_input("5")
+    Helpers.read_input("5")
     |> String.split("\n\n")
     |> Enum.reduce(
       %{
