@@ -1,9 +1,7 @@
 defmodule Solution6 do
   def part1 do
-    lines = Helpers.read_input("6") |> String.split("\n") |> Enum.reject(&(&1 == ""))
-
     times_and_distances =
-      lines
+      Helpers.read_input_lines("6")
       |> Enum.map(fn line ->
         String.split(line, ~r/:\s+/)
         |> Enum.at(1)
@@ -16,10 +14,8 @@ defmodule Solution6 do
   end
 
   def part2 do
-    lines = Helpers.read_input("6") |> String.split("\n") |> Enum.reject(&(&1 == ""))
-
     [time, distance] =
-      lines
+      Helpers.read_input_lines("6")
       |> Enum.map(fn line ->
         String.split(line, ~r/:\s+/)
         |> Enum.at(1)
